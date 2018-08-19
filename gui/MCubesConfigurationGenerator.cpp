@@ -325,7 +325,6 @@ int MCubesConfigurationGenerator::writeConfigurations() {
   */
 
   MCubesCubeSigns signs;
-  signs.init();
   writeConfigurations(0, signs);
 
   ////  Close the file  ///
@@ -402,8 +401,7 @@ unsigned int MCubesConfigurationGenerator::findRefConfiguration(
 
   const unsigned int nbBasicConfigurations =
       mBasicConfigurations->getNbConfigurations();
-  unsigned int foundConfiguration =
-      MCubesConfigurationArray::UNDEFINED_CONFIGURATION;
+  size_t foundConfiguration = MCubesConfigurationArray::UNDEFINED_CONFIGURATION;
 
   for (unsigned int iConfiguration = 0; iConfiguration < nbBasicConfigurations;
        iConfiguration++) {
@@ -476,38 +474,38 @@ unsigned int MCubesConfigurationGenerator::findRefConfiguration(
                   cubeIndexes.inversePermutation();
                   return foundConfiguration;
                 }
-                refConfSigns.apply0246Symmetry();
-                cubeIndexes.apply0246Symmetry();
+                MCubesCube::apply0246Symmetry(refConfSigns);
+                MCubesCube::apply0246Symmetry(cubeIndexes);
               }
 
               if (iPa4 == 0) {
                 // interchange a3 and a4
-                refConfSigns.apply0167Symmetry();
-                cubeIndexes.apply0167Symmetry();
+                MCubesCube::apply0167Symmetry(refConfSigns);
+                MCubesCube::apply0167Symmetry(cubeIndexes);
               } else if (iPa4 == 1) {
                 // Restore a3 and a4
-                refConfSigns.apply0167Symmetry();
-                cubeIndexes.apply0167Symmetry();
+                MCubesCube::apply0167Symmetry(refConfSigns);
+                MCubesCube::apply0167Symmetry(cubeIndexes);
                 // interchange a1 and a4
-                refConfSigns.apply0356Symmetry();
-                cubeIndexes.apply0356Symmetry();
+                MCubesCube::apply0356Symmetry(refConfSigns);
+                MCubesCube::apply0356Symmetry(cubeIndexes);
               } else {
                 // Restore a1 and a4
-                refConfSigns.apply0356Symmetry();
-                cubeIndexes.apply0356Symmetry();
+                MCubesCube::apply0356Symmetry(refConfSigns);
+                MCubesCube::apply0356Symmetry(cubeIndexes);
               }
             }
 
-            refConfSigns.applyYZSymmetry();
-            cubeIndexes.applyYZSymmetry();
+            MCubesCube::applyYZSymmetry(refConfSigns);
+            MCubesCube::applyYZSymmetry(cubeIndexes);
           }
 
-          refConfSigns.applyXZSymmetry();
-          cubeIndexes.applyXZSymmetry();
+          MCubesCube::applyXZSymmetry(refConfSigns);
+          MCubesCube::applyXZSymmetry(cubeIndexes);
         }
 
-        refConfSigns.applyXYSymmetry();
-        cubeIndexes.applyXYSymmetry();
+        MCubesCube::applyXYSymmetry(refConfSigns);
+        MCubesCube::applyXYSymmetry(cubeIndexes);
       }
     }
   }

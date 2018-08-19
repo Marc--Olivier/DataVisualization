@@ -111,7 +111,7 @@ unsigned int MCubesCubeIndexes::getEdgeNewIndex(unsigned int oldIndex) {
     iNewP2 = tmp;
   }
 
-  unsigned int edgeNewIndex = (unsigned int)-1;
+  unsigned int edgeNewIndex = std::numeric_limits<unsigned int>::min();
   for (unsigned int iEdgeIndex = 0; iEdgeIndex < 12; iEdgeIndex++) {
     if (EDGE_TO_POINT[iEdgeIndex][0] == iNewP1 &&
         EDGE_TO_POINT[iEdgeIndex][1] == iNewP2) {
