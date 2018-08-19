@@ -44,8 +44,9 @@ private:
 
 private:
   void writeConfigurations(unsigned int iLevel, MCubesCubeSigns &signs) const;
-  unsigned int findRefConfiguration(const MCubesCubeSigns &signs,
-                                    MCubesCubeIndexes &cubeIndexes) const;
+  unsigned int
+  findRefConfiguration(const MCubesCubeSigns &signs,
+                       MCubesCubeIndexes::Array &cubeIndexes) const;
   void writeConfiguration(const MCubesCubeSigns &signs,
                           unsigned int nbTriangles, unsigned int *triangles,
                           unsigned int referenceConfigurationIndex) const;
@@ -349,7 +350,7 @@ void MCubesConfigurationGenerator::writeConfigurations(
     // Find the equivalent basic configuration
     // by applying symmetries on reference configurations
 
-    MCubesCubeIndexes cubeIndexes;
+    auto cubeIndexes = MCubesCubeIndexes::createIndices();
     unsigned int foundConfiguration =
         MCubesConfigurationGenerator::findRefConfiguration(signs, cubeIndexes);
 // assert( foundConfiguration !=
@@ -368,7 +369,8 @@ void MCubesConfigurationGenerator::writeConfigurations(
         mBasicConfigurations->getTriangles(foundConfiguration);
     unsigned int *triangles = new unsigned int[3 * nbTriangles];
     for (unsigned int iEdge = 0; iEdge < 3 * nbTriangles; iEdge++)
-      triangles[iEdge] = cubeIndexes.getEdgeNewIndex(refTriangles[iEdge]);
+      triangles[iEdge] =
+          MCubesCubeIndexes::getEdgeNewIndex(cubeIndexes, refTriangles[iEdge]);
 
     writeConfiguration(signs, nbTriangles, triangles, foundConfiguration);
     delete[] triangles;
@@ -394,7 +396,7 @@ void MCubesConfigurationGenerator::writeConfigurations(
 */ /*
  =======================================*/
 unsigned int MCubesConfigurationGenerator::findRefConfiguration(
-    const MCubesCubeSigns &signs, MCubesCubeIndexes &cubeIndexes) const {
+    const MCubesCubeSigns &signs, MCubesCubeIndexes::Array &cubeIndexes) const {
   MCubesCubeSigns auxSigns = signs;
   auxSigns.setMinusMajority();
   const unsigned int nbPlus = auxSigns.getNbPlusSigns();
@@ -409,7 +411,7 @@ unsigned int MCubesConfigurationGenerator::findRefConfiguration(
         mBasicConfigurations->getSigns(iConfiguration);
     unsigned int nbRefPlus = refConfSigns.getNbPlusSigns();
     if (nbPlus == nbRefPlus) {
-      cubeIndexes.initDefault();
+      cubeIndexes = MCubesCubeIndexes::createIndices();
 
       //// Test all configurations
       //
@@ -471,7 +473,7 @@ unsigned int MCubesConfigurationGenerator::findRefConfiguration(
               for (unsigned int iPa2 = 0; iPa2 < 2; iPa2++) {
                 if (refConfSigns == auxSigns) {
                   foundConfiguration = iConfiguration;
-                  cubeIndexes.inversePermutation();
+                  MCubesCubeIndexes::inversePermutation(cubeIndexes);
                   return foundConfiguration;
                 }
                 MCubesCube::apply0246Symmetry(refConfSigns);

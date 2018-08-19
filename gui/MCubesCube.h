@@ -27,6 +27,9 @@
 class MCubesCube {
 
 public:
+  MCubesCube() = delete;
+
+public:
   template <typename TCube> static void applyXYSymmetry(TCube &arr) {
     std::swap(arr[0], arr[4]);
     std::swap(arr[1], arr[5]);
@@ -84,22 +87,24 @@ public:
 
 */ /*
  =======================================*/
-class MCubesCubeIndexes : public std::array<size_t, 8> {
+class MCubesCubeIndexes {
 
 public:
-  void initDefault();
-  void inversePermutation();
+  MCubesCubeIndexes() = delete;
+  using Array = std::array<size_t, 8>;
 
 public:
-  unsigned int getEdgeNewIndex(unsigned int oldIndex);
+  static Array createIndices();
+  static void inversePermutation(Array &arr);
+  static size_t getEdgeNewIndex(const Array &arr, size_t oldIndex);
 
 public:
-  inline static const unsigned int *edgeToPoint(unsigned int iEdge) {
+  static const std::array<size_t, 2> &edgeToPoint(unsigned int iEdge) {
     return EDGE_TO_POINT[iEdge];
   }
 
 private:
-  static unsigned int EDGE_TO_POINT[12][2];
+  static std::array<size_t, 2> EDGE_TO_POINT[12];
 };
 
 /*=======================================*/

@@ -23,7 +23,8 @@
 #include "MCubesCube.h"
 
 // C / C++
-#include <assert.h>
+#include <cassert>
+#include <numeric>
 
 // Qt
 
@@ -33,55 +34,20 @@
 /*=======================================*/
 /*=======================================*/
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   08/07/2010
-   \file   MCubesCube.h
-*/ /*!   
-   Cube with integer indexes
-
-      7_____6        z
-     /|    /|        |  y
-    4_____5 |        | /
-    | |   | |        |/
-    | |   | |        #----- x
-    | |   | |   
-    | 3___|_2 
-    |/    |/    
-    0_____1   
-
-*/ /*
- =======================================*/
-
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   09/07/2010
-   \file   MCubesCube.cpp
-*/ /*!   
-   Initialize default values
-*/ /*
- =======================================*/
-void MCubesCubeIndexes::initDefault() {
-  for (unsigned int iVertex = 0; iVertex < 8; iVertex++)
-    operator[](iVertex) = iVertex;
+std::array<size_t, 8> MCubesCubeIndexes::createIndices() {
+  static const std::array<size_t, 8> arr = []() {
+    std::array<size_t, 8> auxArr;
+    std::iota(auxArr.begin(), auxArr.end(), 1);
+    return auxArr;
+  }();
+  return arr;
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   13/07/2010
-   \file   MCubesCube.cpp
-*/ /*!   
-   compute the inverse transformation
-*/ /*
- =======================================*/
-void MCubesCubeIndexes::inversePermutation() {
-  MCubesCubeIndexes oldPermutation = *this;
+void MCubesCubeIndexes::inversePermutation(std::array<size_t, 8> &arr) {
+  std::array<size_t, 8> oldPermutation = arr;
   for (unsigned int iPermutation = 0; iPermutation < 8; iPermutation++) {
     assert(oldPermutation[iPermutation] < 8);
-    operator[](oldPermutation[iPermutation]) = iPermutation;
+    arr[oldPermutation[iPermutation]] = iPermutation;
   }
 }
 
@@ -95,24 +61,24 @@ void MCubesCubeIndexes::inversePermutation() {
    from the mesh index in the 0..8 cube index
 */ /*
  =======================================*/
-unsigned int MCubesCubeIndexes::EDGE_TO_POINT[12][2] = {
+std::array<size_t, 2> MCubesCubeIndexes::EDGE_TO_POINT[12] = {
     {0, 1}, {2, 3}, {6, 7}, {4, 5}, {0, 3}, {1, 2},
     {5, 6}, {4, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
 
-unsigned int MCubesCubeIndexes::getEdgeNewIndex(unsigned int oldIndex) {
-  unsigned int iOldP1 = EDGE_TO_POINT[oldIndex][0];
-  unsigned int iOldP2 = EDGE_TO_POINT[oldIndex][1];
+size_t MCubesCubeIndexes::getEdgeNewIndex(const std::array<size_t, 8> &arr,
+                                          size_t oldIndex) {
+  auto iOldP1 = EDGE_TO_POINT[oldIndex][0];
+  auto iOldP2 = EDGE_TO_POINT[oldIndex][1];
 
-  unsigned int iNewP1 = operator[](iOldP1);
-  unsigned int iNewP2 = operator[](iOldP2);
+  auto iNewP1 = arr[iOldP1];
+  auto iNewP2 = arr[iOldP2];
   if (iNewP1 > iNewP2) {
-    unsigned int tmp = iNewP1;
-    iNewP1 = iNewP2;
-    iNewP2 = tmp;
+    std::swap(iNewP1, iNewP2);
   }
 
-  unsigned int edgeNewIndex = std::numeric_limits<unsigned int>::min();
-  for (unsigned int iEdgeIndex = 0; iEdgeIndex < 12; iEdgeIndex++) {
+  constexpr auto undefinedEdgeIndex = std::numeric_limits<size_t>::min();
+  auto edgeNewIndex = undefinedEdgeIndex;
+  for (size_t iEdgeIndex = 0; iEdgeIndex < 12; iEdgeIndex++) {
     if (EDGE_TO_POINT[iEdgeIndex][0] == iNewP1 &&
         EDGE_TO_POINT[iEdgeIndex][1] == iNewP2) {
       edgeNewIndex = iEdgeIndex;
@@ -120,7 +86,7 @@ unsigned int MCubesCubeIndexes::getEdgeNewIndex(unsigned int oldIndex) {
     }
   }
 
-  assert(edgeNewIndex != (unsigned int)-1);
+  assert(edgeNewIndex != undefinedEdgeIndex);
   return edgeNewIndex;
 }
 

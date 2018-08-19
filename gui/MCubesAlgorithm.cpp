@@ -284,7 +284,7 @@ MCubesAlgorithm::createIsoSurface(double surfaceValue) {
             }
 #endif
             if (iCurrentSurfacePoint == UNDEFINED_EDGE) {
-              const unsigned int *pointIndexes =
+              const auto &pointIndexes =
                   MCubesCubeIndexes::edgeToPoint(relativeEdge);
               // The iso surface is crossing the edge
               // => the values cannot be equal on the vertices
