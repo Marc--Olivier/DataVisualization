@@ -23,43 +23,49 @@
 #include "MCubesTools.h"
 
 template <class ObjectType>
-class MCubesCube : public MCubesArray<8, ObjectType> {
+class MCubesCube : public std::array<ObjectType, 8> {
 
 public:
   INLINE void applyXYSymmetry() {
-    MCubesArray<8, ObjectType>::exchange(0, 4);
-    MCubesArray<8, ObjectType>::exchange(1, 5);
-    MCubesArray<8, ObjectType>::exchange(2, 6);
-    MCubesArray<8, ObjectType>::exchange(3, 7);
+    MCubesCube &arr = *this;
+    std::swap(arr[0], arr[4]);
+    std::swap(arr[1], arr[5]);
+    std::swap(arr[2], arr[6]);
+    std::swap(arr[3], arr[7]);
   }
 
   INLINE void applyXZSymmetry() {
-    MCubesArray<8, ObjectType>::exchange(0, 3);
-    MCubesArray<8, ObjectType>::exchange(1, 2);
-    MCubesArray<8, ObjectType>::exchange(4, 7);
-    MCubesArray<8, ObjectType>::exchange(5, 6);
+    MCubesCube &arr = *this;
+    std::swap(arr[0], arr[3]);
+    std::swap(arr[1], arr[2]);
+    std::swap(arr[4], arr[7]);
+    std::swap(arr[5], arr[6]);
   }
 
   INLINE void applyYZSymmetry() {
-    MCubesArray<8, ObjectType>::exchange(0, 1);
-    MCubesArray<8, ObjectType>::exchange(2, 3);
-    MCubesArray<8, ObjectType>::exchange(4, 5);
-    MCubesArray<8, ObjectType>::exchange(6, 7);
+    MCubesCube &arr = *this;
+    std::swap(arr[0], arr[1]);
+    std::swap(arr[2], arr[3]);
+    std::swap(arr[4], arr[5]);
+    std::swap(arr[6], arr[7]);
   }
 
   INLINE void apply0167Symmetry() {
-    MCubesArray<8, ObjectType>::exchange(3, 4);
-    MCubesArray<8, ObjectType>::exchange(2, 5);
+    MCubesCube &arr = *this;
+    std::swap(arr[3], arr[4]);
+    std::swap(arr[2], arr[5]);
   }
 
   INLINE void apply0246Symmetry() {
-    MCubesArray<8, ObjectType>::exchange(1, 3);
-    MCubesArray<8, ObjectType>::exchange(5, 7);
+    MCubesCube &arr = *this;
+    std::swap(arr[1], arr[3]);
+    std::swap(arr[5], arr[7]);
   }
 
   INLINE void apply0356Symmetry() {
-    MCubesArray<8, ObjectType>::exchange(1, 4);
-    MCubesArray<8, ObjectType>::exchange(2, 7);
+    MCubesCube &arr = *this;
+    std::swap(arr[1], arr[4]);
+    std::swap(arr[2], arr[7]);
   }
 };
 

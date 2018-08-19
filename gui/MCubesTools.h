@@ -23,42 +23,13 @@ extern const double PI;
 /*=======================================*/
 /**
    \author M.O. Andrez
-   \date   07/07/2010
-   \file   MCubesTools.h
-*/ /*!   
-   Array with fixed size
-*/ /*
- =======================================*/
-template <size_t TSize, class ObjectType>
-class MCubesArray : public std::array<ObjectType, TSize> {
-public:
-  INLINE void exchange(size_t index1, size_t index2) {
-    std::swap(std::array<ObjectType, TSize>::operator[](index1),
-              std::array<ObjectType, TSize>::operator[](index2));
-  }
-};
-
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   08/07/2010
-   \file   MCubesTools.h
-*/ /*!   
-   Line
-*/ /*
- =======================================*/
-class MCubesLine : public MCubesArray<2, unsigned int> {};
-
-/*=======================================*/
-/**
-   \author M.O. Andrez
    \date   08/07/2010
    \file   MCubesTools.h
 */ /*!   
    Triangle
 */ /*
  =======================================*/
-class MCubesTriangle : public MCubesArray<3, size_t> {};
+class MCubesTriangle : public std::array<size_t, 3> {};
 
 /*=======================================*/
 /**
