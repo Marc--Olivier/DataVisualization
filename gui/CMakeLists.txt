@@ -36,7 +36,7 @@ add_library(gui
 )
 
 target_link_libraries(gui PUBLIC Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBRARIES} dcmimage gui_resources)
-set_property(TARGET gui PROPERTY CXX_STANDARD 17)
+apply_compilation_flags(gui)
 
 add_executable(datavisualization ${GUI_APP} MACOSX_BUNDLE
     main.cpp

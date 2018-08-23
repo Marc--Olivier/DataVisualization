@@ -208,20 +208,18 @@ MCubesAlgorithm::createIsoSurface(double surfaceValue) {
           size_t startXIndex = iX + iY * (nbXPoints - 1);
           size_t startYIndex = iX + iY * nbXPoints;
           std::array<size_t *, 12> absoluteEdgeIndexArray = {
-              &currentXEdgeArray[startXIndex],
-              &currentXEdgeArray[startXIndex + nbXPoints - 1],
-              &nextXEdgeArray[startXIndex + nbXPoints - 1],
-              &nextXEdgeArray[startXIndex],
+              {&currentXEdgeArray[startXIndex],
+               &currentXEdgeArray[startXIndex + nbXPoints - 1],
+               &nextXEdgeArray[startXIndex + nbXPoints - 1],
+               &nextXEdgeArray[startXIndex],
 
-              &currentYEdgeArray[startYIndex],
-              &currentYEdgeArray[startYIndex + 1],
-              &nextYEdgeArray[startYIndex + 1],
-              &nextYEdgeArray[startYIndex],
+               &currentYEdgeArray[startYIndex],
+               &currentYEdgeArray[startYIndex + 1],
+               &nextYEdgeArray[startYIndex + 1], &nextYEdgeArray[startYIndex],
 
-              &zEdgeArray[startYIndex],
-              &zEdgeArray[startYIndex + 1],
-              &zEdgeArray[startYIndex + nbXPoints + 1],
-              &zEdgeArray[startYIndex + nbXPoints]};
+               &zEdgeArray[startYIndex], &zEdgeArray[startYIndex + 1],
+               &zEdgeArray[startYIndex + nbXPoints + 1],
+               &zEdgeArray[startYIndex + nbXPoints]}};
 
           double xPositions[8] = {xData[iX],     xData[iX + 1], xData[iX + 1],
                                   xData[iX],     xData[iX],     xData[iX + 1],

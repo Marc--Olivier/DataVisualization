@@ -62,8 +62,8 @@ void MCubesCubeIndexes::inversePermutation(std::array<size_t, 8> &arr) {
 */ /*
  =======================================*/
 std::array<size_t, 2> MCubesCubeIndexes::EDGE_TO_POINT[12] = {
-    {0, 1}, {2, 3}, {6, 7}, {4, 5}, {0, 3}, {1, 2},
-    {5, 6}, {4, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+    {{0, 1}}, {{2, 3}}, {{6, 7}}, {{4, 5}}, {{0, 3}}, {{1, 2}},
+    {{5, 6}}, {{4, 7}}, {{0, 4}}, {{1, 5}}, {{2, 6}}, {{3, 7}}};
 
 size_t MCubesCubeIndexes::getEdgeNewIndex(const std::array<size_t, 8> &arr,
                                           size_t oldIndex) {

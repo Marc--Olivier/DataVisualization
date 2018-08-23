@@ -287,7 +287,7 @@ MCubesConfigurationGenerator::~MCubesConfigurationGenerator() {
 int MCubesConfigurationGenerator::writeConfigurations() {
   ////  Open the file  ///
   mFile = fopen("MCubesAllConfigurations_init.cpp", "w");
-  if (mFile == NULL)
+  if (mFile == nullptr)
     return -1;
 
   ////  Write the header  ///
@@ -524,7 +524,7 @@ unsigned int MCubesConfigurationGenerator::findRefConfiguration(
    Write one configuration 
 */ /*
  =======================================*/
-static inline const char bool2sign(bool sign) { return sign ? '+' : '-'; };
+static inline char bool2sign(bool sign) { return sign ? '+' : '-'; };
 static inline const char *bool2string(bool sign) {
   return sign ? "true" : "false";
 };

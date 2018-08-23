@@ -1,0 +1,6 @@
+function(apply_compilation_flags target)
+  message(STATUS "[apply-compilation-flags] target=${target}")
+  set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
+  set(COMPILE_FLAGS -Wall -Wextra -Werror)
+  target_compile_options(${target} PUBLIC ${COMPILE_FLAGS})
+endfunction()
