@@ -5,4 +5,5 @@ project(datavisualization_root)
 enable_testing()
 
 include("build-tools/compilation-flags.cmake")
+add_subdirectory(third-parties)
 add_subdirectory(gui)
