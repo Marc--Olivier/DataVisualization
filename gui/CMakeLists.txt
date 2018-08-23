@@ -1,7 +1,7 @@
 project(gui VERSION 1.0 LANGUAGES CXX)
 
-include("third_parties/dcmtk.cmake")
-include("third_parties/qt5.cmake")
+include("third-parties/dcmtk.cmake")
+include("third-parties/qt5.cmake")
 
 add_subdirectory(resources)
 
