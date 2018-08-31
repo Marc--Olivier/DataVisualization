@@ -1,66 +1,40 @@
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   14/07/2010
-   \file   MCubesGridDicom.cpp
-*/ /*!   
-   Grid of points constructed from a DICOM file
-*/ /*
- =======================================*/
-
-// Class definition
 #include "DicomReader.h"
 
-// C / C++
-#include <assert.h>
+#include <cassert>
+#include <dcmtk/dcmimgle/dcmimage.h>
+#include <numeric>
 
-// DICOM
-#include "dcmtk/dcmimgle/dcmimage.h"
+#include "marching-cubes/Tensor3D.hpp"
 
-// MCubes
-#include "MCubesData.h"
-#include "MCubesGrid.h"
+DicomData::DicomData(std::unique_ptr<marchingcubes::Grid3D> grid,
+                     std::unique_ptr<marchingcubes::Tensor3D> values,
+                     const std::list<std::string> &errorFileNameList)
+    : mGrid{std::move(grid)}, mValues{std::move(values)},
+      mErrorFileNameList{errorFileNameList} {}
 
-ReadDicom::ReadDicom() : mGrid(new MCubesGrid()), mValues(new MCubesData()) {}
-ReadDicom::~ReadDicom() = default;
-ReadDicom::ReadDicom(ReadDicom &&) = default;
+DicomData::~DicomData() = default;
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   09/07/2010
-   \file   MCubesGrid.cpp
-*/ /*!   
-   Constructor
-*/ /*
- =======================================*/
-ReadDicom DicomReader::readFiles(const std::list<std::string> &fileNameList) {
-  ReadDicom readDicom;
+DicomData::DicomData(DicomData &&) = default;
+
+DicomData DicomReader::readFiles(const std::list<std::string> &fileNameList) {
   std::for_each(fileNameList.begin(), fileNameList.end(),
-                [&readDicom](const std::string &fileName) {
-                  readOneFile(fileName, readDicom);
-                });
-  return readDicom;
+                [&](const std::string &fileName) { readOneFile(fileName); });
+  auto dimX = x.size();
+  auto dimY = y.size();
+  auto dimZ = z.size();
+  auto grid = std::make_unique<marchingcubes::Grid3D>(
+      std::move(x), std::move(y), std::move(z));
+  auto tensor3D = std::make_unique<marchingcubes::Tensor3D>(dimX, dimY, dimZ,
+                                                            std::move(values));
+  return DicomData{std::move(grid), std::move(tensor3D), errorFileNameList};
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   16/07/2010
-   \file   MCubesGrid.cpp
-*/ /*!   
-   Read one DICOM file
-   Documentation of DicomImage: http://support.dcmtk.org/docs/classDicomImage.html 
-*/ /*
- =======================================*/
-// void MCubesGridDicom::readOneFile( const char * fileName  )
-void DicomReader::readOneFile(const std::string &fileName,
-                              ReadDicom &readDicom) {
+void DicomReader::readOneFile(const std::string &fileName) {
   // Open the file
   DicomImage image(fileName.data());
 
   if (image.getStatus() != EIS_Normal) {
-    readDicom.mErrorFileNameList.push_back(fileName);
+    errorFileNameList.push_back(fileName);
     return;
   }
 
@@ -70,56 +44,43 @@ void DicomReader::readOneFile(const std::string &fileName,
   auto nbFrames = image.getFrameCount();
   assert(width != 0 && height != 0 && nbFrames != 0);
 
-  MCubesData &xData = readDicom.mGrid->getData(I_XAXIS);
-  MCubesData &yData = readDicom.mGrid->getData(I_YAXIS);
-  MCubesData &zData = readDicom.mGrid->getData(I_ZAXIS);
-  auto iZStart = zData.size();
-
-  if (iZStart == 0) {
-    xData.resize(width);
-    yData.resize(height);
-
-    // Set the x, y and z values
-    for (size_t iX = 0; iX < width; iX++)
-      xData[iX] = iX;
-
-    for (size_t iY = 0; iY < height; iY++)
-      yData[iY] = iY;
-  }
-
-  else {
-    bool isWidthValid = (width == xData.size());
-    bool isHeightValid = (height == yData.size());
-    if (!isWidthValid || !isHeightValid) {
-      readDicom.mErrorFileNameList.push_back(fileName);
+  if (z.empty()) {
+    x.resize(width);
+    y.resize(height);
+    std::iota(x.begin(), x.end(), 0);
+    std::iota(y.begin(), y.end(), 0);
+  } else {
+    if (x.size() != width || y.size() == height) {
+      errorFileNameList.push_back(fileName);
       return;
     }
   }
 
-  auto nbTotalFrames = iZStart + nbFrames;
-  zData.resize(nbTotalFrames);
+  auto prevFramesCount = z.size();
+  z.resize(prevFramesCount + nbFrames);
+  std::iota(z.begin() + static_cast<long>(prevFramesCount), z.end(),
+            prevFramesCount);
 
-  for (auto iZ = iZStart; iZ < nbTotalFrames; iZ++)
-    zData[iZ] = iZ;
-
-  ////  Get the images values
-
-  auto nbPointsOneSlice = width * height;
-  auto nbTotalPoints = nbPointsOneSlice * nbTotalFrames;
-  auto &values = *readDicom.mValues;
-  values.resize(nbTotalPoints);
+  auto pointCountOnOneFrame = width * height;
+  auto totalPointCount = pointCountOnOneFrame * z.size();
+  values.resize(totalPointCount);
 
   int isMonochrome = image.isMonochrome();
-#ifdef _DEBUG
+#if 0
   {
-    unsigned int memorySize = image.getOutputDataSize();
-    unsigned int memoryIncrement = memorySize / nbPointsOneSlice;
+    auto memorySize = image.getOutputDataSize();
+    auto memoryIncrement = memorySize / pointCountOnOneFrame;
+    if (!((isMonochrome && memoryIncrement != 1) ||
+          (!isMonochrome && memoryIncrement == 2))) {
+      throw std::runtime_error("Invalid image size");
+    }
+
     assert((isMonochrome && memoryIncrement == 1) ||
            (!isMonochrome && memoryIncrement == 2));
   }
 #endif
 
-  auto iGlobalIndex = iZStart * nbPointsOneSlice;
+  auto index = prevFramesCount * pointCountOnOneFrame;
   for (unsigned int iFrame = 0; iFrame < nbFrames; iFrame++) {
     const void *frameBuffer = image.getOutputData(0, iFrame);
 
@@ -127,7 +88,7 @@ void DicomReader::readOneFile(const std::string &fileName,
       const char *frameParser = static_cast<const char *>(frameBuffer);
       for (unsigned int iY = 0; iY < height; iY++) {
         for (unsigned int iX = 0; iX < width; iX++) {
-          values[iGlobalIndex++] = *frameParser;
+          values[index++] = *frameParser;
           frameParser++;
         }
       }
@@ -135,16 +96,15 @@ void DicomReader::readOneFile(const std::string &fileName,
       const Uint16 *frameParser = static_cast<const Uint16 *>(frameBuffer);
       for (unsigned int iY = 0; iY < height; iY++) {
         for (unsigned int iX = 0; iX < width; iX++) {
-          values[iGlobalIndex++] = *frameParser;
+          values[index++] = *frameParser;
           frameParser++;
         }
       }
     }
   }
-  assert(iGlobalIndex == nbTotalPoints);
-
-  xData.computeProperties();
-  yData.computeProperties();
-  zData.computeProperties();
-  values.computeProperties();
+  if (index != totalPointCount) {
+    throw std::runtime_error("index " + std::to_string(index) +
+                             " does not match totalPointCount " +
+                             std::to_string(totalPointCount));
+  }
 }

@@ -11,36 +11,62 @@
 
 #include <list>
 #include <memory>
+#include <vector>
 
-class MCubesData;
-class MCubesGrid;
+namespace marchingcubes {
+class Grid3D;
+class Tensor3D;
+} // namespace marchingcubes
 
-class ReadDicom {
-  friend class DicomReader;
+/*!
+ * \class DicomData
+ * \brief The DicomData class stores DICOM data as a tensor 3D and a grid 3D.
+ *
+ * DicomData objects are usually created by a DicomReader.
+ */
+class DicomData {
 
 public:
-  ReadDicom();
-  ~ReadDicom();
-  ReadDicom(ReadDicom &&);
+  DicomData(std::unique_ptr<marchingcubes::Grid3D> grid,
+            std::unique_ptr<marchingcubes::Tensor3D> values,
+            const std::list<std::string> &errorFileNameList);
+  ~DicomData();
+  DicomData(DicomData &&);
 
 public:
-  std::unique_ptr<MCubesGrid> releaseGrid() { return std::move(mGrid); }
-  std::unique_ptr<MCubesData> releaseValues() { return std::move(mValues); }
+  std::unique_ptr<marchingcubes::Grid3D> releaseGrid() {
+    return std::move(mGrid);
+  }
+  std::unique_ptr<marchingcubes::Tensor3D> releaseValues() {
+    return std::move(mValues);
+  }
   const std::list<std::string> &getErrorFileNameList() const {
     return mErrorFileNameList;
   }
 
 private:
-  std::unique_ptr<MCubesGrid> mGrid;
-  std::unique_ptr<MCubesData> mValues;
+  std::unique_ptr<marchingcubes::Grid3D> mGrid;
+  std::unique_ptr<marchingcubes::Tensor3D> mValues;
   std::list<std::string> mErrorFileNameList;
 };
 
+/*!
+ * \class DicomReader
+ * \brief The DicomReader class read DICOM files and creates a DicomData object
+ * from them.
+ */
 class DicomReader {
 
 public:
-  static ReadDicom readFiles(const std::list<std::string> &fileNameList);
+  DicomData readFiles(const std::list<std::string> &fileNameList);
 
 private:
-  static void readOneFile(const std::string &fileName, ReadDicom &readDicom);
+  void readOneFile(const std::string &fileName);
+
+private:
+  std::vector<double> x;
+  std::vector<double> y;
+  std::vector<double> z;
+  std::vector<double> values;
+  std::list<std::string> errorFileNameList;
 };

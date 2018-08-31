@@ -9,10 +9,14 @@
  =======================================*/
 
 // Class definition
-#include "MCubesWindow.h"
+#include "gui/MCubesWindow.h"
+
+#include "marching-cubes/MarchingCubes.hpp"
+#include "marching-cubes/Tensor3D.hpp"
 
 // C / C++
-#include <assert.h>
+#include <cassert>
+#include <cmath>
 
 // Qt
 #include <QAction>
@@ -27,67 +31,15 @@
 #include <QVBoxLayout>
 
 // MCubes
-#include "DicomReader.h"
-#include "MCubesAlgorithm.h"
-#include "MCubesGrid.h"
-#include "MCubesRenderer.h"
-#include "MCubesSurface.h"
+#include "gui/DicomReader.h"
+#include "gui/MCubesRenderer.h"
+#include "gui/MCubesTools.h"
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   09/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Fonctor to construct values values f=x²+y²+z²
-   on a grid (x,y,z)  
-*/ /*
- =======================================*/
-class MCubesFonctorSphere {
-public:
-  MCubesFonctorSphere() {
-    mValues = new MCubesData();
-    mPointGlobalIndex = 0;
-  }
-
-  ~MCubesFonctorSphere() { delete mValues; }
-
-private:
-  MCubesData *mValues;
-  unsigned int mPointGlobalIndex;
-
-public:
-  MCubesData *detachData() {
-    MCubesData *values = mValues;
-    mValues = new MCubesData();
-    return values;
-  }
-
-public:
-  void setGrid(const MCubesGrid &grid) {
-    mPointGlobalIndex = 0;
-    mValues->resize(grid.getGridSize());
-  }
-
-  inline void execute(double xValue, double yValue, double zValue) {
-    (*mValues)[mPointGlobalIndex++] =
-        xValue * xValue + yValue * yValue + zValue * zValue;
-  }
-};
-
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   06/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Constructor
-*/ /*
- =======================================*/
 MCubesWindow::MCubesWindow(QWidget *parentWidget, Qt::WindowFlags flags)
-    : QMainWindow(parentWidget, flags) {
+    : QMainWindow(parentWidget, flags),
+      mMarchingCubes(new marchingcubes::MarchingCubes{}) {
+
   setWindowTitle(QObject::tr("DICOM 3D renderer"));
-  mMarchingCubes = new MCubesAlgorithm();
 
   resize(500, 400);
   QWidget *theCentralWidget = new QWidget(this);
@@ -183,34 +135,11 @@ MCubesWindow::MCubesWindow(QWidget *parentWidget, Qt::WindowFlags flags)
   }
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   15/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Destructor
-*/ /*
- =======================================*/
-MCubesWindow::~MCubesWindow() {
-  setMarchingCubesData();
-  delete mMarchingCubes;
-  mMarchingCubes = nullptr;
-}
+MCubesWindow::~MCubesWindow() = default;
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   13/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Add log messages
-*/ /*
- =======================================*/
 void MCubesWindow::addLogMessage(const QString &message) {
   mLogWidget->append(message);
   mLogWidget->repaint();
-  // QCoreApplication::processEvents( ) ;
 }
 
 void MCubesWindow::clearLogMessage() {
@@ -218,154 +147,52 @@ void MCubesWindow::clearLogMessage() {
   mLogWidget->repaint();
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   15/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Set the wanted iso value 
-*/ /*
- =======================================*/
-void MCubesWindow::setIsoValue(double isoValue) {
-  // Update the slider
-  {
-    mIsoValueSlider->blockSignals(true);
-    MCubesRange sliderRange(mIsoValueSlider->minimum(),
-                            mIsoValueSlider->maximum());
-    MCubesRange isoValueRange(mCurrentValues->getMin(),
-                              mCurrentValues->getMax());
-    double value = sliderRange.getTransformedValue(isoValueRange, isoValue);
-    mIsoValueSlider->setValue(
-        static_cast<int>(value >= 0.0 ? value + 0.5 : value - 0.5));
-    mIsoValueSlider->blockSignals(false);
-  }
-
-  // Update the spin box
-  {
-    mIsoValueSpinBox->blockSignals(true);
-    mIsoValueSpinBox->setValue(isoValue);
-    mIsoValueSpinBox->blockSignals(false);
-  }
-
-  // Update the iso-surface
-  {
-    while (mRenderer->getNbSurfaces() > 0)
-      mRenderer->removeLastSurface();
-
-    // Compute the iso surface f=1
-    addLogMessage(QString("\nCompute the v=%1 iso-surface").arg(isoValue));
-
-    QTime timer;
-    timer.start();
-    auto newSurface = mMarchingCubes->createIsoSurface(isoValue);
-
-    int elapsedTime = timer.elapsed();
-    addLogMessage(QString("Marching cubes executed in %1 ms").arg(elapsedTime));
-    addLogMessage(QString("Surface created: %1 points and %2 surfaces")
-                      .arg(newSurface->getNbData())
-                      .arg(newSurface->getFaceList().size()));
-
-    mRenderer->addSurface(std::move(newSurface));
-  }
-}
-
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   15/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Slot called when the value of the slider has changed
-*/ /*
- =======================================*/
 void MCubesWindow::slotSliderValueChanged(int value) {
-  assert(mCurrentValues != NULL);
+  assert(mCurrentTensor != NULL);
   MCubesRange sliderRange(mIsoValueSlider->minimum(),
                           mIsoValueSlider->maximum());
-  MCubesRange isoValueRange(mCurrentValues->getMin(), mCurrentValues->getMax());
+  MCubesRange isoValueRange(tensorMin, tensorMax);
   double isoValue = isoValueRange.getTransformedValue(sliderRange, value);
 
   setIsoValue(isoValue);
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   15/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Slot called when the value of the spin box has changed
-*/ /*
- =======================================*/
 void MCubesWindow::slotSpinBoxValueChanged(double value) { setIsoValue(value); }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   13/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Slot called to execute the marching cubes on a "sphere" grid
-*/ /*
- =======================================*/
 void MCubesWindow::slotTestSphere() {
-  ////  Test  ////
+
+  using namespace marchingcubes;
 
   // Create grid with f=x²+y²+z² values
   unsigned int nbXPoints = 101;
   unsigned int nbYPoints = 101;
   unsigned int nbZPoints = 101;
-  /*
-  unsigned int nbXPoints = 1001 ;
-  unsigned int nbYPoints = 501 ;
-  unsigned int nbZPoints = 101 ;
-  */
-  // addLogMessage( QString( "\n=================\n" ) ) ;
-  clearLogMessage();
-  addLogMessage(QString("Create grid (%1,%2,%3)")
-                    .arg(nbXPoints)
-                    .arg(nbYPoints)
-                    .arg(nbZPoints));
-  mCurrentGrid = MCubesGrid::createGrid(-1.0, 1.0, -2.0, 2.0, -3.0, 3.0,
-                                        nbXPoints, nbYPoints, nbZPoints);
 
+  clearLogMessage();
   QTime timer;
   timer.start();
 
-  /*
-  auto elementsCount = mCurrentGrid->getGridSize();
-  std::vector<double> values(elementsCount);
-  for (size_t zIdx = 0; zIdx < mCurrentGrid->getData(); ++zIdx) {
-  }
-  */
+  auto grid = std::make_unique<marchingcubes::Grid3D>(
+      equidistantPoints(-1.0, 1.0, nbXPoints),
+      equidistantPoints(-2.0, 2.0, nbYPoints),
+      equidistantPoints(-3.0, 3.0, nbZPoints));
+  addLogMessage(QString("Created grid (%1,%2,%3)")
+                    .arg(nbXPoints)
+                    .arg(nbYPoints)
+                    .arg(nbZPoints));
 
-  MCubesFonctorSphere sphereFonctor;
-  mCurrentGrid->scanAllPoints(sphereFonctor);
-  mCurrentValues.reset(sphereFonctor.detachData());
-  mCurrentValues->computeProperties();
+  auto tensor = std::make_unique<marchingcubes::Tensor3D>(
+      marchingcubes::createSphere(*grid));
   addLogMessage(
-      QString("Fill %1 points using the f=x²+y²+z² sphere function in %2 ms")
+      QString("Filled %1 points using the f=x²+y²+z² sphere function in %2 ms")
           .arg(nbXPoints * nbYPoints * nbZPoints)
           .arg(timer.elapsed()));
 
-  setMarchingCubesData();
-  setIsoValue(0.5 * (mCurrentValues->getMin() + mCurrentValues->getMax()));
+  setTensor(std::move(grid), std::move(tensor));
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   14/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Slot called to open a dicom file 
-   and execute the marching cube on it 
-   
-   Data encoding: http://medical.nema.org/dicom/2007/07_05pu.pdf
-*/ /*
- =======================================*/
 void MCubesWindow::slotOpenFile() {
+
   // addLogMessage( QString( "\n=================\n" ) ) ;
   clearLogMessage();
   QStringList fileList =
@@ -377,24 +204,16 @@ void MCubesWindow::slotOpenFile() {
     return;
   }
 
-  /*
-  QString fileName =
-     QFileDialog::getOpenFileName( this, QObject::tr( "Open DICOM file" ),
-                                   QString(), "DICOM (*.dcm);; All (*)" ) ;
-  */
-
   QTime timer;
   timer.start();
 
-  // Create the grid
   fileList.sort();
   std::list<std::string> fileNameList;
   foreach (const QString &fileName, fileList)
-    // fileNameList.push_back( fileName.toLatin1().toData() ) ;
     fileNameList.push_back(fileName.toStdString());
 
-  auto readDicom = DicomReader::readFiles(fileNameList);
-  const auto &errorFileNameList = readDicom.getErrorFileNameList();
+  auto dicomData = DicomReader{}.readFiles(fileNameList);
+  const auto &errorFileNameList = dicomData.getErrorFileNameList();
   QStringList notReadFiles;
   for (std::list<std::string>::const_iterator itFile =
            errorFileNameList.begin();
@@ -419,43 +238,70 @@ void MCubesWindow::slotOpenFile() {
                       .arg(timer.elapsed()));
   }
 
-  mCurrentValues = readDicom.releaseValues();
-  mCurrentGrid = readDicom.releaseGrid();
-  setMarchingCubesData();
-  // => The memory of the grid is now owned by the MCubesWindow
-
-  // Set a "good" iso-value
-  setIsoValue(0.5 * (mCurrentValues->getMin() + mCurrentValues->getMax()));
+  setTensor(dicomData.releaseGrid(), dicomData.releaseValues());
 }
 
-/*=======================================*/
-/**
-   \author M.O. Andrez
-   \date   14/07/2010
-   \file   MCubesWindow.cpp
-*/ /*!   
-   Set the marching cubes data
-   The memory is then owned by the MCubesWindow
-*/ /*
- =======================================*/
-void MCubesWindow::setMarchingCubesData() {
-  mMarchingCubes->setGridPoints(nullptr);
-  mMarchingCubes->setValues(nullptr);
+void MCubesWindow::setTensor(std::unique_ptr<marchingcubes::Grid3D> grid,
+                             std::unique_ptr<marchingcubes::Tensor3D> tensor) {
+  assert(grid != nullptr);
+  assert(tensor != nullptr);
+  mIsoSurfaceWidget->setEnabled(true);
 
-  mMarchingCubes->setGridPoints(mCurrentGrid.get());
-  mMarchingCubes->setValues(mCurrentValues.get());
+  mCurrentGrid = std::move(grid);
+  mCurrentTensor = std::move(tensor);
 
-  if (mCurrentValues != nullptr && mCurrentGrid != nullptr) {
-    mIsoSurfaceWidget->setEnabled(true);
-    mIsoValueSpinBox->setMinimum(mCurrentValues->getMin());
-    mIsoValueSpinBox->setMaximum(mCurrentValues->getMax());
-    // mIsoValueSlider->
+  std::tie(tensorMin, tensorMax) = mCurrentTensor->minMax();
 
-    addLogMessage(QObject::tr("Grid size = %1 x %2 x %3")
-                      .arg(mCurrentGrid->getData(I_XAXIS).size())
-                      .arg(mCurrentGrid->getData(I_YAXIS).size())
-                      .arg(mCurrentGrid->getData(I_ZAXIS).size()));
-  } else {
-    mIsoSurfaceWidget->setEnabled(false);
+  addLogMessage(QObject::tr("Grid size = %1 x %2 x %3")
+                    .arg(mCurrentGrid->values[I_XAXIS].size())
+                    .arg(mCurrentGrid->values[I_YAXIS].size())
+                    .arg(mCurrentGrid->values[I_ZAXIS].size()));
+  addLogMessage(
+      QString("tensorMin=%1, tensorMax=%2").arg(tensorMin).arg(tensorMax));
+
+  auto lowerValue = static_cast<int>(std::floor(tensorMin));
+  auto upperValue = static_cast<int>(std::ceil(tensorMax));
+  {
+    QSignalBlocker blocker(mIsoValueSpinBox);
+    mIsoValueSpinBox->setRange(lowerValue, upperValue);
   }
+  {
+    QSignalBlocker blocker(mIsoValueSlider);
+    mIsoValueSlider->setMinimum(lowerValue);
+    mIsoValueSlider->setMaximum(upperValue);
+  }
+  setIsoValue(0.5 * (tensorMin + tensorMax));
+}
+
+void MCubesWindow::setIsoValue(double isoValue) {
+  {
+    MCubesRange sliderRange(mIsoValueSlider->minimum(),
+                            mIsoValueSlider->maximum());
+    QSignalBlocker blocker(mIsoValueSlider);
+    MCubesRange isoValueRange(tensorMin, tensorMax);
+    double value = sliderRange.getTransformedValue(isoValueRange, isoValue);
+    mIsoValueSlider->setValue(
+        static_cast<int>(value >= 0.0 ? value + 0.5 : value - 0.5));
+  }
+  {
+    QSignalBlocker blocker(mIsoValueSpinBox);
+    mIsoValueSpinBox->setValue(isoValue);
+  }
+
+  QTime timer;
+  timer.start();
+  auto newSurface =
+      mMarchingCubes->isoSurface(*mCurrentGrid, *mCurrentTensor, isoValue);
+
+  int elapsedTime = timer.elapsed();
+  addLogMessage(QString("Marching cubes executed in %1 ms").arg(elapsedTime));
+  addLogMessage(QString("Surface created: %1 points and %2 surfaces")
+                    .arg(newSurface.size() * 3)
+                    .arg(newSurface.size()));
+
+  while (mRenderer->surfaceCount() > 0) {
+    mRenderer->removeSurface();
+  }
+  mRenderer->addSurface(std::move(newSurface), *mCurrentGrid);
+  mRenderer->updateGL();
 }

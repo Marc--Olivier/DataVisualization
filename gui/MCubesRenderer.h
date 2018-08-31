@@ -11,30 +11,26 @@
  =======================================*/
 #pragma once
 
-// Inherits
-#include <QGLWidget>
+#include "marching-cubes/MarchingCubes.hpp"
 
-// Qt
+#include <QGLWidget>
 #include <QPoint>
 
-// MCubes
 class MCubesSurface;
 
+/*!
+ * \brief The MCubesRenderer class is a widget that renders 3D surfaces.
+ */
 class MCubesRenderer : public QGLWidget {
-  Q_OBJECT
 
-  /*=============
-    Constructor
-  *=============*/
+  using Surface = std::vector<marchingcubes::Triangle3D>;
+
 public:
   MCubesRenderer(QWidget *parent = nullptr,
                  const QGLWidget *shareWidget = nullptr,
                  Qt::WindowFlags flags = nullptr);
   virtual ~MCubesRenderer();
 
-  /*=============
-     QWidget
-  *=============*/
 protected:
   virtual void mousePressEvent(QMouseEvent *evt);
   virtual void mouseMoveEvent(QMouseEvent *evt);
@@ -42,9 +38,6 @@ protected:
 private:
   QPoint mMouseCurrentPos;
 
-  /*=============
-     Open GL
-  *=============*/
 protected:
   virtual void initializeGL();
   virtual void resizeGL(int width, int height);
@@ -60,19 +53,19 @@ private:
 public:
   void setIsoXYZ(bool isIsoXYZ);
 
-  /*=============
-     Surfaces
-  *=============*/
 private:
-  std::list<std::unique_ptr<MCubesSurface>> mSurfaceList;
+  std::vector<Surface> mSurfaceList;
+  std::array<std::vector<std::pair<double, double>>, marchingcubes::DIM_COUNT>
+      minMax;
 
 public:
-  inline size_t getNbSurfaces() const { return mSurfaceList.size(); }
-  void addSurface(std::unique_ptr<MCubesSurface> surface);
-  void removeLastSurface();
+  inline size_t surfaceCount() const { return mSurfaceList.size(); }
+  void addSurface(Surface surface, const marchingcubes::Grid3D &grid);
+  void removeSurface();
 
 private:
-  void drawSurface(const MCubesSurface &surface);
+  void drawSurface(const Surface &surface,
+                   const std::pair<double, double> &zMinMax);
 
 private:
   std::pair<double, double> computeMinMax(size_t iAxis) const;
