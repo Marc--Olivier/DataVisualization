@@ -33,5 +33,8 @@ function(install_external name)
 endfunction()
 
 install_external(catch2)
+install_external(google-test) # Required by google-benchmark
+install_external(google-benchmark)
 
 add_subdirectory(catch-main)
+add_subdirectory(benchmark-main)
