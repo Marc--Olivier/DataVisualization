@@ -38,3 +38,16 @@ target_link_libraries(testMarchingCubes
 apply_compilation_flags(testMarchingCubes)
 
 add_catch_test(testMarchingCubes)
+
+#-------  benchmarkMarchingCubes  -------#
+
+add_executable(benchmarkMarchingCubes
+	tests/benchmarkMarchingCubes.cpp
+)
+
+target_link_libraries(benchmarkMarchingCubes
+	# benchmark::main must be before marching-cubes to compile
+	PUBLIC benchmark::main marching-cubes
+)
+
+apply_compilation_flags(benchmarkMarchingCubes)
