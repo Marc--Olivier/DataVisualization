@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="240px" height="170px">
+  <g transform="translate(20 0)">
+    <g stroke="black" fill-opacity="0.0" transform="translate(60 0)" >
+      <defs>
+        <!-- horizontal line -->
+        <g id="hline">
+          <line x1="0" y1="0" x2="90" y2="0"/>
+        </g>
+        <!-- vertical line -->
+        <g id="vline">
+          <line x1="0" y1="0" x2="0" y2="90"/>
+        </g>
+        <!-- diagonal line -->
+        <g id="dline">
+          <line x1="0" y1="0" x2="30" y2="-30"/>
+        </g>
+      </defs>
+      <!-- Horizontal lines -->
+      <use xlink:href="#hline" transform="translate(0 60)" />
+      <use xlink:href="#hline" transform="translate(0 90)" />
+      <use xlink:href="#hline" transform="translate(0 120)" />
+      <use xlink:href="#hline" transform="translate(0 150)" />
+
+      <use xlink:href="#hline" transform="translate(15 45)" />
+      <use xlink:href="#hline" transform="translate(30 30)" />
+
+      <use xlink:href="#hline" transform="translate(15 75)" stroke-dasharray="1 1"/>
+      <use xlink:href="#hline" transform="translate(15 105)" stroke-dasharray="1 1"/>
+      <use xlink:href="#hline" transform="translate(15 135)" stroke-dasharray="1 1"/>
+
+      <!-- vertical lines -->
+      <use xlink:href="#vline" transform="translate(0 60)" />
+      <use xlink:href="#vline" transform="translate(30 60)" />
+      <use xlink:href="#vline" transform="translate(60 60)" />
+      <use xlink:href="#vline" transform="translate(90 60)" />
+
+      <use xlink:href="#vline" transform="translate(105 45)" />
+      <use xlink:href="#vline" transform="translate(120 30)" />
+
+      <use xlink:href="#vline" transform="translate(15 45)" stroke-dasharray="1 1"/>
+      <use xlink:href="#vline" transform="translate(45 45)" stroke-dasharray="1 1"/>
+      <use xlink:href="#vline" transform="translate(75 45)" stroke-dasharray="1 1"/>
+
+      <!-- diagonal lines -->
+      <use xlink:href="#dline" transform="translate(0 60)" />
+      <use xlink:href="#dline" transform="translate(30 60)" />
+      <use xlink:href="#dline" transform="translate(60 60)" />
+      <use xlink:href="#dline" transform="translate(90 60)" />
+
+      <use xlink:href="#dline" transform="translate(90 90)" />
+      <use xlink:href="#dline" transform="translate(90 120)" />
+      <use xlink:href="#dline" transform="translate(90 150)" />
+
+      <use xlink:href="#dline" transform="translate(0 90) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(0 120) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(30 120) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(60 120) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(0 150) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(30 150) scale(0.5)" stroke-dasharray="2 2"/>
+      <use xlink:href="#dline" transform="translate(60 150) scale(0.5)" stroke-dasharray="2 2"/>
+
+      <!-- red cube -->
+      <g stroke="red" stroke-width="3">
+        <use xlink:href="#hline" transform="translate(30 60) scale(0.33)" />
+        <use xlink:href="#hline" transform="translate(30 90) scale(0.33)" />
+        <use xlink:href="#hline" transform="translate(45 45) scale(0.33)" />
+        <use xlink:href="#hline" transform="translate(45 75) scale(0.33)" stroke-dasharray="4 4"/>
+        <use xlink:href="#vline" transform="translate(30 60) scale(0.33)" />
+        <use xlink:href="#vline" transform="translate(60 60) scale(0.33)" />
+        <use xlink:href="#vline" transform="translate(45 45) scale(0.33)" stroke-dasharray="4 4"/>
+        <use xlink:href="#vline" transform="translate(75 45) scale(0.33)" stroke-dasharray="4 4"/>
+        <use xlink:href="#dline" transform="translate(30 60) scale(0.5)"/>
+        <use xlink:href="#dline" transform="translate(60 60) scale(0.5)"/>
+        <use xlink:href="#dline" transform="translate(30 90) scale(0.5)" stroke-dasharray="4 4"/>
+        <use xlink:href="#dline" transform="translate(60 90) scale(0.5)" stroke-dasharray="4 4"/>
+      </g>
+    </g>
+    <g stroke="blue" fill="blue" fill-opacity="1.0" transform="translate(0 10)">
+      <defs>
+        <!-- Disable eventual stroked-dasharry previously set-->
+        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
+                markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse"
+                stroke-dasharray="1 0">
+          <path d="M 0 0 L 10 5 L 0 10 z" />
+        </marker>
+      </defs>
+      <line x1="0" y1="150" x2="200" y2="150" stroke-width="2" marker-end="url(#arrow)" />
+      <text x="200" y="140">x</text>
+      <line x1="0" y1="150" x2="50" y2="100" stroke-width="2" marker-end="url(#arrow)" />
+      <text x="50" y="87" text-anchor="end">y</text>
+      <line x1="0" y1="150" x2="0" y2="0" stroke-width="2" marker-end="url(#arrow)" />
+      <text x="-15" y="0">z</text>
+    </g>
+  </g>
+</svg>
