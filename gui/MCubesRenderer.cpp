@@ -13,6 +13,8 @@
 // Class definition
 #include "MCubesRenderer.h"
 
+#include "marching-cubes/Tensor3D.hpp"
+
 // C / C++
 #include <assert.h>
 #include <float.h>
@@ -21,8 +23,7 @@
 // Qt
 #include <QMouseEvent>
 
-// MCubes
-#include "MCubesSurface.h"
+#include "gui/MCubesTools.h"
 
 /*=======================================*/
 /**
@@ -313,11 +314,9 @@ void MCubesRenderer::paintGL() {
   }
 
   ////  Draw the surfaces  ////
-  std::for_each(mSurfaceList.cbegin(), mSurfaceList.cend(),
-                [this](const auto &surface) {
-                  surface->updateProperties();
-                  drawSurface(*surface);
-                });
+  for (std::size_t i = 0; i < mSurfaceList.size(); ++i) {
+    drawSurface(mSurfaceList[i], minMax[marchingcubes::Z][i]);
+  }
 }
 
 /*=======================================*/
@@ -329,11 +328,16 @@ void MCubesRenderer::paintGL() {
    Add a drawn surface
 */ /*
  =======================================*/
-void MCubesRenderer::addSurface(std::unique_ptr<MCubesSurface> surface) {
-  assert(surface != nullptr);
+void MCubesRenderer::addSurface(Surface surface,
+                                const marchingcubes::Grid3D &grid) {
+  using namespace marchingcubes;
+  minMax[X].push_back(
+      std::make_pair(grid.values[X].front(), grid.values[X].back()));
+  minMax[Y].push_back(
+      std::make_pair(grid.values[Y].front(), grid.values[Y].back()));
+  minMax[Z].push_back(
+      std::make_pair(grid.values[Z].front(), grid.values[Z].back()));
   mSurfaceList.push_back(std::move(surface));
-  assert(mSurfaceList.back() != nullptr);
-  updateGL();
 }
 
 /*=======================================*/
@@ -345,7 +349,12 @@ void MCubesRenderer::addSurface(std::unique_ptr<MCubesSurface> surface) {
    Remove the last surface
 */ /*
  =======================================*/
-void MCubesRenderer::removeLastSurface() { mSurfaceList.pop_back(); }
+void MCubesRenderer::removeSurface() {
+  mSurfaceList.pop_back();
+  minMax[marchingcubes::X].pop_back();
+  minMax[marchingcubes::Y].pop_back();
+  minMax[marchingcubes::Z].pop_back();
+}
 
 /*=======================================*/
 /**
@@ -356,26 +365,22 @@ void MCubesRenderer::removeLastSurface() { mSurfaceList.pop_back(); }
    Draw a surface
 */ /*
  =======================================*/
-void MCubesRenderer::drawSurface(const MCubesSurface &surface) {
-  // z Min-max
-  auto [zMin, zMax] = surface.getMinMaxValue(I_ZAXIS);
-  MCubesRange zRange(zMin, zMax);
+void MCubesRenderer::drawSurface(const Surface &surface,
+                                 const std::pair<double, double> &zMinMax) {
+
+  using namespace marchingcubes;
+
+  MCubesRange zRange(zMinMax.first, zMinMax.second);
   MCubesRange zColorRange(0.0, 1.0);
 
-  //
-  const std::list<MCubesTriangle> &faceList = surface.getFaceList();
-  assert(faceList.begin() != faceList.end() || faceList.size() == 0);
-  for (std::list<MCubesTriangle>::const_iterator itFace = faceList.begin();
-       itFace != faceList.end(); itFace++) {
+  for (size_t iTriangle = 0; iTriangle < surface.size(); ++iTriangle) {
+    const auto &triangle = surface[iTriangle];
     glBegin(GL_TRIANGLES);
-    for (unsigned int iPoint = 0; iPoint < 3; iPoint++) {
-      size_t pointIndex = (*itFace)[iPoint];
-      double xValue = surface.getData(I_XAXIS, pointIndex);
-      double yValue = surface.getData(I_YAXIS, pointIndex);
-      double zValue = surface.getData(I_ZAXIS, pointIndex);
-      double zColor = zColorRange.getTransformedValue(zRange, zValue);
+    for (unsigned int iPoint = 0; iPoint < triangle.size(); iPoint++) {
+      const auto &point = triangle[iPoint];
+      double zColor = zColorRange.getTransformedValue(zRange, point[Z]);
       glColor3d(zColor, zColor, 1.0);
-      glVertex3d(xValue, yValue, zValue);
+      glVertex3d(point[X], point[Y], point[Z]);
     }
     glEnd();
   }
@@ -391,23 +396,20 @@ void MCubesRenderer::drawSurface(const MCubesSurface &surface) {
 */ /*
  =======================================*/
 std::pair<double, double> MCubesRenderer::computeMinMax(size_t iAxis) const {
-  assert(iAxis == I_XAXIS || iAxis == I_YAXIS || iAxis == I_ZAXIS);
-  if (mSurfaceList.empty()) {
+  const auto &minMaxAxis = minMax.at(iAxis);
+  if (minMaxAxis.empty()) {
     return std::make_pair(0.0, 0.0);
   }
   double minValue, maxValue;
-  std::tie(minValue, maxValue) = mSurfaceList.front()->getMinMaxValue(iAxis);
+  std::tie(minValue, maxValue) = minMaxAxis.front();
 
-  std::for_each(mSurfaceList.cbegin(), mSurfaceList.cend(),
-                [iAxis, &minValue, &maxValue](const auto &surface) {
-                  auto [surfaceMin, surfaceMax] =
-                      surface->getMinMaxValue(iAxis);
+  std::for_each(minMaxAxis.cbegin(), minMaxAxis.cend(),
+                [&minValue, &maxValue](const auto &surfaceMinMax) {
+                  if (surfaceMinMax.first < minValue)
+                    minValue = surfaceMinMax.first;
 
-                  if (surfaceMin < minValue)
-                    minValue = surfaceMin;
-
-                  if (surfaceMax > maxValue)
-                    maxValue = surfaceMax;
+                  if (surfaceMinMax.second > maxValue)
+                    maxValue = surfaceMinMax.second;
                 });
   return std::make_pair(minValue, maxValue);
 }

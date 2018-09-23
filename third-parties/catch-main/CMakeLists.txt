@@ -7,6 +7,7 @@ message(STATUS "Found Catch2:\n     catch2_INTERFACE_INCLUDE_DIRECTORIES=${catch
   "Catch2_INCLUDE_DIRS=${Catch2_INCLUDE_DIRS}\n     Catch2_LIBRARIES=${Catch2_LIBRARIES}")
 
 add_library(catch-main
+    CatchApprox.hpp
     CatchMain.cpp
 )
 

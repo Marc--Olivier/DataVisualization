@@ -9,8 +9,6 @@
  =======================================*/
 #pragma once
 
-#include "MCubes.h"
-
 #include <array>
 
 extern const unsigned int I_XAXIS;
@@ -60,9 +58,9 @@ private:
   double mRangeSize;
 
 public:
-  INLINE double getValue1() const { return mValue1; }
-  INLINE double getValue2() const { return mValue2; }
-  INLINE double getRange() const { return mRangeSize; }
+  double getValue1() const { return mValue1; }
+  double getValue2() const { return mValue2; }
+  double getRange() const { return mRangeSize; }
   void setValue1(double value);
   void setValue2(double value);
 
@@ -78,8 +76,8 @@ public:
                   == (valueOtherRange - otherRange->mValue1)/(otherRange->mValue2-otherRange->mValue1)
    */ /*
     =======================================*/
-  INLINE double getTransformedValue(const MCubesRange &otherRange,
-                                    double valueInOtherRange) const {
+  double getTransformedValue(const MCubesRange &otherRange,
+                             double valueInOtherRange) const {
     return (valueInOtherRange - otherRange.mValue1) * mRangeSize /
                otherRange.mRangeSize +
            mValue1;

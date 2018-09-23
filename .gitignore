@@ -1,1 +1,7 @@
-CMakeLists.txt.user
+/CMakeLists.txt.user
+/build
+
+*.orig
+*.swap
+
+Temporary

@@ -10,20 +10,26 @@
 #pragma once
 
 #include <QMainWindow>
-
 #include <memory>
 
-// Qt
 class QTextEdit;
 class QSlider;
 class QDoubleSpinBox;
 
-// MCubes
 class MCubesRenderer;
 class MCubesAlgorithm;
 class MCubesGrid;
 class MCubesData;
 
+namespace marchingcubes {
+class Grid3D;
+class MarchingCubes;
+class Tensor3D;
+} // namespace marchingcubes
+
+/*!
+ * \brief The MCubesWindow class is the main window of the application.
+ */
 class MCubesWindow : public QMainWindow {
   Q_OBJECT
 
@@ -56,17 +62,16 @@ protected slots:
   void slotSpinBoxValueChanged(double value);
 
 private:
+  void setTensor(std::unique_ptr<marchingcubes::Grid3D> mCurrentGrid,
+                 std::unique_ptr<marchingcubes::Tensor3D> mCurrentTensor);
   void setIsoValue(double isoValue);
 
-  /*==================
-      Marching cubes
-  *==================*/
 private:
-  MCubesAlgorithm *mMarchingCubes; // Composite variable
-private:
-  std::unique_ptr<MCubesGrid> mCurrentGrid;
-  std::unique_ptr<MCubesData> mCurrentValues;
+  const std::unique_ptr<marchingcubes::MarchingCubes> mMarchingCubes;
 
 private:
-  void setMarchingCubesData();
+  std::unique_ptr<marchingcubes::Grid3D> mCurrentGrid;
+  std::unique_ptr<marchingcubes::Tensor3D> mCurrentTensor;
+  double tensorMin;
+  double tensorMax;
 };
