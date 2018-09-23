@@ -1,0 +1,7 @@
+ <!DOCTYPE RCC>
+ <RCC>
+	<qresource prefix="/gui_resources">
+		<file>images/sphere.png</file>
+		<file>images/open.png</file>
+	</qresource>
+ </RCC>
