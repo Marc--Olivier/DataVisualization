@@ -46,13 +46,13 @@ Then, execute the following commands:
 ```sh
 git clone https://gitlab.com/Marc--Olivier/DataVisualization.git
 cd DataVisualization
-mkdir build
-cd build
+mkdir -p build/release
+cd build/release
 QT5_PATH=<path-to-your-installation-of-Qt5>
 DCMTK_PATH=<path-to-your-installation-of-DCMTK>
 # The following command will take some time:
 # it downloads and compiles catch2, google-test and google/benchmark
-cmake -G Ninja ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT5_PATH;$DCMTK_PATH"
+cmake -G Ninja ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT5_PATH;$DCMTK_PATH"
 ninja
 ninja test
 # To run the application:
