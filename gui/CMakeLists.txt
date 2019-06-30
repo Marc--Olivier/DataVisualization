@@ -18,6 +18,7 @@ add_library(gui
 	MCubesWindow.h
 )
 
+target_include_directories(gui PUBLIC ${DCMTK_INCLUDE_DIRS})
 target_link_libraries(gui PUBLIC marching-cubes Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBRARIES} dcmimage gui_resources)
 apply_compilation_flags(gui)
 
